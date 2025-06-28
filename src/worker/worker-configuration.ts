@@ -109,12 +109,10 @@ export class WorkerConfiguration {
       prompt,
       "--output-format",
       "stream-json",
+      "--verbose", // stream-jsonには--verboseが必須
     ];
 
-    // verboseモードが有効な場合のみ--verboseオプションを追加
-    if (this.verbose) {
-      args.push("--verbose");
-    }
+    // 注意: stream-jsonを使用する場合は--verboseが必須のため、常に追加
 
     // セッション継続の場合
     if (sessionId) {
@@ -149,6 +147,7 @@ export class WorkerConfiguration {
 
   /**
    * verboseログを出力する
+   * 注意: Claude CLIは常に--verboseで実行されるが、アプリケーションレベルでの詳細ログは設定で制御
    */
   logVerbose(
     workerName: string,
