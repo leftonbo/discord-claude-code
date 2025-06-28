@@ -19,6 +19,7 @@ Deno.test("WorkerConfiguration - デフォルト設定", () => {
   assertEquals(config.isVerbose(), false);
   assertEquals(config.getAppendSystemPrompt(), undefined);
   assertEquals(config.getTranslatorUrl(), undefined);
+  assertEquals(config.getDangerouslySkipPermissions(), false);
 });
 
 Deno.test("WorkerConfiguration - verboseモード設定", () => {
@@ -39,8 +40,9 @@ Deno.test("WorkerConfiguration - buildClaudeArgs - 基本", () => {
     "--output-format",
     "stream-json",
     "--verbose", // stream-jsonには--verboseが必須
-    "--dangerously-skip-permissions",
   ]);
+  // デフォルトでは--dangerously-skip-permissionsは含まれない
+  assertEquals(args.includes("--dangerously-skip-permissions"), false);
 });
 
 Deno.test("WorkerConfiguration - buildClaudeArgs - verboseモード", () => {
@@ -121,4 +123,26 @@ Deno.test("WorkerConfiguration - logVerbose - 非verboseモードでログ出力
   } finally {
     console.log = originalLog;
   }
+});
+
+Deno.test("WorkerConfiguration - buildClaudeArgs - dangerouslySkipPermissions有効", () => {
+  const config = new WorkerConfiguration(false, undefined, undefined, true);
+  const args = config.buildClaudeArgs("テストプロンプト");
+
+  assertEquals(args.includes("--dangerously-skip-permissions"), true);
+});
+
+Deno.test("WorkerConfiguration - dangerouslySkipPermissions設定", () => {
+  const config = new WorkerConfiguration();
+
+  // デフォルトはfalse
+  assertEquals(config.getDangerouslySkipPermissions(), false);
+
+  // trueに設定
+  config.setDangerouslySkipPermissions(true);
+  assertEquals(config.getDangerouslySkipPermissions(), true);
+
+  // falseに戻す
+  config.setDangerouslySkipPermissions(false);
+  assertEquals(config.getDangerouslySkipPermissions(), false);
 });

@@ -11,7 +11,7 @@ export class WorkerConfiguration {
     verbose = false,
     appendSystemPrompt?: string,
     translatorUrl?: string,
-    dangerouslySkipPermissions = true, // デフォルトはtrue（既存の動作を維持）
+    dangerouslySkipPermissions = false, // デフォルトはfalse（セキュリティ重視）
   ) {
     this.verbose = verbose;
     this.appendSystemPrompt = appendSystemPrompt;
