@@ -38,6 +38,7 @@ Deno.test("WorkerConfiguration - buildClaudeArgs - 基本", () => {
     "テストプロンプト",
     "--output-format",
     "stream-json",
+    "--verbose", // stream-jsonには--verboseが必須
     "--dangerously-skip-permissions",
   ]);
 });
