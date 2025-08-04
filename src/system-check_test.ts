@@ -1,6 +1,7 @@
 import { assertEquals } from "std/assert/mod.ts";
 import {
   checkSystemRequirements,
+  findClaudeExecutable,
   formatSystemCheckResults,
 } from "./system-check.ts";
 
@@ -125,5 +126,22 @@ Deno.test("システム要件チェック機能", async (t) => {
       false,
     );
     assertEquals(formatted.includes("インストール方法"), false);
+  });
+
+  await t.step("Claude CLI検出機能", async () => {
+    // findClaudeExecutable関数のテスト
+    const result = await findClaudeExecutable();
+
+    // 関数が文字列またはnullを返すことを確認
+    assertEquals(typeof result === "string" || result === null, true);
+
+    // 結果がnullでない場合は、"claude"または絶対パスであることを確認
+    if (result !== null) {
+      assertEquals(
+        result === "claude" || result.startsWith("/"),
+        true,
+        "Result should be 'claude' or an absolute path",
+      );
+    }
   });
 });

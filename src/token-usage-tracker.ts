@@ -25,7 +25,7 @@ export class TokenUsageTracker {
    */
   private initializeResetTime(): void {
     const now = new Date();
-    
+
     // 今日の午前0時UTC
     const todayMidnightUTC = new Date(
       now.getUTCFullYear(),
@@ -75,7 +75,10 @@ export class TokenUsageTracker {
     this.checkAndResetIfNeeded();
 
     const nextResetTime = this.getNextResetTime();
-    const nextResetTimeUTC = nextResetTime.toISOString().slice(0, 16).replace('T', ' ');
+    const nextResetTimeUTC = nextResetTime.toISOString().slice(0, 16).replace(
+      "T",
+      " ",
+    );
 
     return {
       currentUsage: this.currentUsage,

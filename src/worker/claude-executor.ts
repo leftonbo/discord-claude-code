@@ -2,6 +2,7 @@ import { ClaudeStreamProcessor } from "./claude-stream-processor.ts";
 import { MessageFormatter } from "./message-formatter.ts";
 import { err, ok, Result } from "neverthrow";
 import type { ClaudeExecutorError } from "./types.ts";
+import { findClaudeExecutable } from "../system-check.ts";
 
 export interface ClaudeCommandExecutor {
   /**
@@ -41,6 +42,16 @@ export class DefaultClaudeCommandExecutor implements ClaudeCommandExecutor {
   ): Promise<
     Result<{ code: number; stderr: Uint8Array }, ClaudeExecutorError>
   > {
+    // Claude CLIの実行可能ファイルパスを取得
+    const claudeExecutable = await findClaudeExecutable();
+    if (!claudeExecutable) {
+      return err({
+        type: "STREAM_PROCESSING_ERROR",
+        error:
+          "Claude CLIが見つかりません。PATH内または~/.claude/local/claudeを確認してください。",
+      });
+    }
+
     // VERBOSEモードでコマンド詳細ログ
     if (this.verbose) {
       console.log(
@@ -48,6 +59,7 @@ export class DefaultClaudeCommandExecutor implements ClaudeCommandExecutor {
           new Date().toISOString()
         }] [DefaultClaudeCommandExecutor] Claudeコマンド実行:`,
       );
+      console.log(`  実行ファイル: ${claudeExecutable}`);
       console.log(`  作業ディレクトリ: ${cwd}`);
       console.log(`  引数: ${JSON.stringify(args)}`);
       if (env && Object.keys(env).length > 0) {
@@ -59,7 +71,7 @@ export class DefaultClaudeCommandExecutor implements ClaudeCommandExecutor {
       // 現在の環境変数に追加の環境変数をマージ
       const commandEnv = env ? { ...Deno.env.toObject(), ...env } : undefined;
 
-      const command = new Deno.Command("claude", {
+      const command = new Deno.Command(claudeExecutable, {
         args,
         cwd,
         stdout: "piped",

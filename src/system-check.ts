@@ -1,5 +1,7 @@
 import { err, ok, Result } from "npm:neverthrow@8.1.1";
 import { exec } from "./utils/exec.ts";
+import { join } from "std/path/mod.ts";
+import { exists } from "std/fs/mod.ts";
 
 // エラー型の定義
 export type SystemCheckError = {
@@ -135,7 +137,24 @@ export async function checkSystemRequirements(): Promise<
 async function checkCommand(
   command: string,
 ): Promise<Result<CommandStatus, SystemCheckError>> {
-  const result = await exec(`${command} --version`);
+  let commandToExecute = command;
+
+  // Claude CLIの場合は特別な処理
+  if (command === "claude") {
+    const claudeExecutable = await findClaudeExecutable();
+    if (claudeExecutable) {
+      commandToExecute = claudeExecutable;
+    } else {
+      return ok({
+        command,
+        available: false,
+        error:
+          "Claude CLIが見つかりません。PATH内または~/.claude/local/claudeを確認してください。",
+      });
+    }
+  }
+
+  const result = await exec(`${commandToExecute} --version`);
 
   if (result.isOk()) {
     return ok({
@@ -159,6 +178,30 @@ async function checkCommand(
       error: result.error.error || result.error.message,
     });
   }
+}
+
+/**
+ * Claude CLIの実行可能ファイルパスを探す
+ * 1. PATH内の`claude`コマンド
+ * 2. ~/.claude/local/claude (ローカルインストール)
+ */
+export async function findClaudeExecutable(): Promise<string | null> {
+  // まずPATH内のclaudeコマンドを試す
+  const pathResult = await exec("which claude");
+  if (pathResult.isOk() && pathResult.value.output.trim()) {
+    return "claude"; // PATH内にあるのでコマンド名をそのまま返す
+  }
+
+  // ローカルインストールパスを確認
+  const homeDir = Deno.env.get("HOME");
+  if (homeDir) {
+    const localClaudePath = join(homeDir, ".claude", "local", "claude");
+    if (await exists(localClaudePath)) {
+      return localClaudePath;
+    }
+  }
+
+  return null;
 }
 
 export function formatSystemCheckResults(
